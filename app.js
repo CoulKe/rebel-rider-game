@@ -26,12 +26,8 @@ let score = 0;
  * Timer in ms for popping objects from car array.
  */
 let popTimer = 700;
-
-// Speed
-let slow = 10;
-let medium = 15;
-let fast = 20;
 let carSpeed = 5;
+
 /**Car Height */
 const cH = 50;
 /**Car Width */
@@ -42,6 +38,7 @@ const colors = {
   2: greenCar,
   3: blueCar,
 };
+
 /**
  * Player object.
  * @property `w`: Width
@@ -67,6 +64,32 @@ let poppedCars = [];
 // ========================
 //    Global functions
 // ========================
+
+// Game speeds
+//After 10 seconds
+let slowSpeed = function () {
+  setTimeout(() => {
+    popTimer = 650;
+    carSpeed = 7;
+  }, 10000);
+  rider.speed = 12;
+};
+//After 20 seconds
+let mediumSpeed = function () {
+  setTimeout(() => {
+    popTimer = 550;
+    carSpeed = 8;
+    rider.speed = 15;
+  }, 20000);
+};
+//After 40 seconds
+let fastSpeed = function () {
+  setTimeout(() => {
+    popTimer = 400;
+    carSpeed = 10;
+    rider.speed = 25;
+  }, 40000);
+};
 
 /**
  * Generates cars and fill them to `initCars`.
@@ -207,20 +230,10 @@ function updateGame() {
   }
 }
 updateGame();
+slowSpeed();
+mediumSpeed();
+fastSpeed();
 
-setTimeout(() => {
-  popTimer = 650;
-  carSpeed = 7;
-}, 10000);
-setTimeout(() => {
-  popTimer = 550;
-  carSpeed = 8;
-}, 30000);
-setTimeout(() => {
-  popTimer = 400;
-  carSpeed = 10;
-  rider.speed = 15;
-}, 30000);
 /**
  * Restart game
  */
@@ -230,9 +243,18 @@ function restart() {
   popTimer = 700;
   carSpeed = 5;
   rider.speed = 10;
-  (rider.x = canvas.width / 2 - 25), //Half of canvas - half of player width
+  (rider.x = canvas.width / 2 - 25), //Center = Half of canvas - half of player width
     (scoreDisplay.innerHTML = `Your score: ${score}`);
   poppedCars.push(initCars.pop());
+
+  clearTimeout(slowSpeed);
+  clearTimeout(mediumSpeed);
+  clearTimeout(fastSpeed);
+
+  slowSpeed();
+  mediumSpeed();
+  fastSpeed();
+
   fail.style.display = "none";
   updateGame();
 }
