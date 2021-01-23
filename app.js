@@ -1,74 +1,135 @@
-const red = document.querySelector("#red-car");
-const green = document.querySelector("#green-car");
-const blue = document.querySelector("#blue-car");
-const bikerImg = document.querySelector("#biker");
+// ===========================
+//      Global variables
+// ===========================
+
+//Cars
+const redCar = document.querySelector("#red-car");
+const greenCar = document.querySelector("#green-car");
+const blueCar = document.querySelector("#blue-car");
+
+/**
+ * Image representing player.
+ */
+const riderImg = document.querySelector("#rider");
 const canvas = document.querySelector("canvas");
 const context = canvas.getContext("2d");
-
+/**
+ * HTML element for displaying game failure .
+ */
 const fail = document.querySelector("#fail");
-
-let scoreUpdater = document.querySelector("#score");
+/**
+ * HTML element for displaying score.
+ */
+let scoreDisplay = document.querySelector("#score");
 let score = 0;
-let timer = 700;
+/**
+ * Timer in ms for popping objects from car array.
+ */
+let popTimer = 700;
+
+// Speed
+let slow = 10;
+let medium = 15;
+let fast = 20;
 let carSpeed = 5;
-// Car Height
+/**Car Height */
 const cH = 50;
-// Car Width
+/**Car Width */
 const cW = 50;
+/**Available car colors */
 const colors = {
-  1: red,
-  2: green,
-  3: blue,
+  1: redCar,
+  2: greenCar,
+  3: blueCar,
 };
-const biker = {
+/**
+ * Player object.
+ * @property `w`: Width
+ * @property `h`: height
+ * @property `speed`: Speed
+ * @property `x`: x-axis point
+ */
+const rider = {
   w: 50,
   h: 80,
   speed: 10,
-  dx: 0,
+  x: canvas.width / 2 - 25,
 };
+/**
+ * Initial cars container filled by `setCars` function
+ */
 const initCars = [];
-let cars = [];
+/**
+ * Popped cars from `initCars`
+ */
+let poppedCars = [];
 
-function setupCars() {
+// ========================
+//    Global functions
+// ========================
+
+/**
+ * Generates cars and fill them to `initCars`.
+ */
+function setCars() {
   for (let index = 0; index < 20; index++) {
     initCars.push({
       passed: false,
-      color: Math.floor(Math.random() * 3) + 1,
+      color: Math.floor(Math.random() * Object.keys(colors).length) + 1,
       y: 0,
-      x: Math.floor(Math.random() * canvas.width) + 25, //to start inside canvas
+      x: Math.ceil(Math.random() * canvas.width),
     });
   }
 }
+/**
+ * Infinitely call `setCars` to regenerate cars near depletion.
+ */
+function refillCars() {
+  setInterval(() => {
+    poppedCars.push(initCars.pop());
+    if (initCars.length < 10) {
+      setCars();
+    }
+  }, popTimer);
+}
+refillCars();
+setCars();
 
-setInterval(() => {
-  cars.push(initCars.pop());
-  if (initCars.length < 10) {
-    setupCars();
-  }
-}, timer);
-
-setupCars();
-
+/**
+ *  Draw player
+ */
+function drawRider() {
+  context.drawImage(
+    riderImg,
+    rider.x,
+    canvas.height - rider.h,
+    rider.w,
+    rider.h
+  );
+}
+/**
+ * Draw cars to the canvas
+ */
 function drawCars() {
-  cars.forEach((car) => {
-    if (car.x < 25) {
-      car.x += 30;
-    }
+  poppedCars.forEach((car) => {
+    //for right
     if (car.x > canvas.width - 50) {
-      car.x -= 50;
+      car.x = canvas.width - 50;
     }
+
     if (!car.passed) {
       context.drawImage(colors[car.color], car.x, car.y, cW, cH);
       car.y += carSpeed;
     }
   });
 }
-
+/**Move player to the right */
 function moveRight() {
-  biker.dx += biker.speed;
+  rider.x += rider.speed;
 }
+/**Move player to the left */
 function moveLeft() {
-  biker.dx -= biker.speed;
+  rider.x -= rider.speed;
 }
 /**
  * Checks Arrow keys event.
@@ -81,22 +142,29 @@ function keyDown(e) {
     moveLeft();
   }
 }
-function detectWalls() {
+/**
+ * Detect if player crosses beyond canvas width.
+ */
+function detectBoundary() {
   // Right wall
-  if (biker.dx + biker.w > canvas.width) {
-    biker.dx = canvas.width - biker.w;
+  if (rider.x + rider.w > canvas.width) {
+    rider.x = canvas.width - rider.w;
   }
   // Left wall
-  if (biker.dx < 0) {
-    biker.dx = 0;
+  if (rider.x < 0) {
+    rider.x = 0;
   }
 }
-function detectCrash() {
+/**
+ * Detect if player crashes with a car in motion.
+ * @returns `Boolean`
+ */
+function isCrashed() {
   let collide = false;
 
-  for (let i = 0; i < cars.length; i++) {
-    if (biker.h + cars[i].y > canvas.height) {
-      if (Math.abs(biker.dx - cars[i].x) <= 40) {
+  for (let i = 0; i < poppedCars.length; i++) {
+    if (rider.h + poppedCars[i].y > canvas.height) {
+      if (Math.abs(rider.x - poppedCars[i].x) <= 45) {
         collide = true;
         fail.style.display = "flex";
       }
@@ -104,62 +172,69 @@ function detectCrash() {
   }
   return collide;
 }
+/**
+ * Updates the `score` variable and displays inside `scoreDisplay`
+ */
+function scoreUpdate() {
+  score++;
+  scoreDisplay.innerHTML = `Your score: ${score}`;
+}
+/**
+ * Clears cars that crosses beyond canvas height and calls `scoreUpdate`
+ */
 function clearCar() {
-  cars.forEach((car) => {
+  poppedCars.forEach((car) => {
     if (car.y + 50 > canvas.height) {
       car.passed = true;
       car.y = 0;
-      score++;
-      scoreUpdater.innerHTML = `Your score: ${score}`;
+      scoreUpdate();
     }
   });
 }
 
-function update() {
+function updateGame() {
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(
-    bikerImg,
-    biker.dx,
-    canvas.height - biker.h,
-    biker.w,
-    biker.h
-  );
+
   drawCars();
+  drawRider();
 
   clearCar();
 
-  detectWalls();
+  detectBoundary();
 
-  if (!detectCrash()) {
-    requestAnimationFrame(update);
+  if (!isCrashed()) {
+    requestAnimationFrame(updateGame);
   }
 }
-update();
+updateGame();
 
 setTimeout(() => {
-  timer = 650;
+  popTimer = 650;
   carSpeed = 7;
 }, 10000);
 setTimeout(() => {
-  timer = 550;
+  popTimer = 550;
   carSpeed = 8;
 }, 30000);
 setTimeout(() => {
-  timer = 400;
+  popTimer = 400;
   carSpeed = 10;
-  biker.speed = 15
+  rider.speed = 15;
 }, 30000);
-
+/**
+ * Restart game
+ */
 function restart() {
-  cars = [];
+  poppedCars = [];
   score = 0;
-  timer = 700;
+  popTimer = 700;
   carSpeed = 5;
-  biker.speed = 10
-  scoreUpdater.innerHTML = `Your score: ${score}`;
-  cars.push(initCars.pop());
+  rider.speed = 10;
+  (rider.x = canvas.width / 2 - 25), //Half of canvas - half of player width
+    (scoreDisplay.innerHTML = `Your score: ${score}`);
+  poppedCars.push(initCars.pop());
   fail.style.display = "none";
-  update();
+  updateGame();
 }
 document.addEventListener("keydown", keyDown);
 fail.addEventListener("click", restart);
