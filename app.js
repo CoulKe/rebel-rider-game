@@ -16,7 +16,9 @@ const context = canvas.getContext("2d");
 /**
  * HTML element for displaying game failure .
  */
-const fail = document.querySelector("#fail");
+const failOrWin = document.querySelector("#failOrWin");
+const failMsg = document.querySelector("#failMsg");
+const winMsg = document.querySelector("#winMsg");
 /**
  * HTML element for displaying score.
  */
@@ -27,6 +29,7 @@ let score = 0;
  */
 let popTimer = 700;
 let carSpeed = 5;
+const maxCars = 100;
 
 /**Car Height */
 const cH = 50;
@@ -95,7 +98,7 @@ let fastSpeed = function () {
  * Generates cars and fill them to `initCars`.
  */
 function setCars() {
-  for (let index = 0; index < 20; index++) {
+  for (let index = 0; index < maxCars; index++) {
     initCars.push({
       passed: false,
       color: Math.floor(Math.random() * Object.keys(colors).length) + 1,
@@ -117,6 +120,16 @@ function refillCars() {
 }
 refillCars();
 setCars();
+
+function hasWon() {
+  if (poppedCars.length > maxCars - 1) {
+    failOrWin.style.display = "flex";
+    winMsg.style.display = "flex";
+    return true;
+  } else {
+    return false;
+  }
+}
 
 /**
  *  Draw player
@@ -187,9 +200,10 @@ function isCrashed() {
 
   for (let i = 0; i < poppedCars.length; i++) {
     if (rider.h + poppedCars[i].y > canvas.height) {
-      if (Math.abs(rider.x - poppedCars[i].x) <= 45) {
+      if (Math.abs(rider.x - poppedCars[i].x) <= 45 && !hasWon()) {
         collide = true;
-        fail.style.display = "flex";
+        failOrWin.style.display = "flex";
+        failMsg.style.display = "flex";
       }
     }
   }
@@ -225,7 +239,7 @@ function updateGame() {
 
   detectBoundary();
 
-  if (!isCrashed()) {
+  if (!isCrashed() && !hasWon()) {
     requestAnimationFrame(updateGame);
   }
 }
@@ -255,8 +269,10 @@ function restart() {
   mediumSpeed();
   fastSpeed();
 
-  fail.style.display = "none";
+  failOrWin.style.display = "none";
+  winMsg.style.display = "none";
+  failMsg.style.display = "none";
   updateGame();
 }
 document.addEventListener("keydown", keyDown);
-fail.addEventListener("click", restart);
+failOrWin.addEventListener("click", restart);

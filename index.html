@@ -17,7 +17,8 @@
     <img src="./rider.png" alt="rider image" id="rider">
 
     <div id="failOrWin">
-        <h1>You failed!</h1>
+        <h1 id="failMsg">You failed!</h1>
+        <h1 id="winMsg">You win</h1>
         <button id="button">Restart</button>
     </div>
 
@@ -43,6 +44,9 @@
     h1{
         margin: 0px;
     }
+    #failMsg,#winMsg{
+        display: none;
+    }
     canvas{
         position: relative;
         background-color: rgb(83, 83, 83);
@@ -56,12 +60,12 @@
         display: none; /* to be changed dynamically */
         flex-direction: column;
     }
-    #button{
+    button{
         background-color: #fff;
         font-weight: bold;
         padding: 0.5rem;
     }
-    #button:hover{
+    button:hover{
         cursor: pointer;
     }
     #red-car, #green-car, #blue-car, #rider{
